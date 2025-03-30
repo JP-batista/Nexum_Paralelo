@@ -1,30 +1,44 @@
 import React from "react";
-import { View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
 
 export default function SocialLogin() {
+  function handleLogin(rede: string) {
+  }
+
   return (
     <View style={styles.container}>
-      <View style={[styles.iconWrapper, styles.facebook]}>
+      <TouchableOpacity
+        style={[styles.iconWrapper, styles.facebook]}
+        onPress={() => handleLogin("Facebook")}
+      >
         <Image
           source={require("../assets/images/facebook.png")}
           style={styles.icon}
           resizeMode="contain"
         />
-      </View>
-      <View style={[styles.iconWrapper, styles.google]}>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.iconWrapper, styles.google]}
+        onPress={() => handleLogin("Google")}
+      >
         <Image
           source={require("../assets/images/google.png")}
           style={styles.icon}
           resizeMode="contain"
         />
-      </View>
-      <View style={[styles.iconWrapper, styles.twitter]}>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.iconWrapper, styles.twitter]}
+        onPress={() => handleLogin("Twitter")}
+      >
         <Image
           source={require("../assets/images/twitter.png")}
           style={styles.icon}
           resizeMode="contain"
         />
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }
