@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import Input from "../src/components/Input";
 import SocialLogin from "../src/components/SocialLogin";
@@ -7,6 +8,7 @@ import CheckBox from "expo-checkbox";
 export default function AuthScreen() {
   const [modo, setModo] = useState<"inicio" | "login" | "cadastro">("inicio");
   const [termos, setTermos] = useState(false);
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -27,9 +29,9 @@ export default function AuthScreen() {
           <>
             <Input placeholder="Email" placeholderTextColor="#aaa" />
             <Input placeholder="Senha" secure placeholderTextColor="#aaa" />
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Entrar</Text>
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => router.push("/perfil")}>
+      <Text style={styles.buttonText}>Entrar</Text>
+    </TouchableOpacity>
 
             <View style={styles.divider}>
               <View style={styles.line} />
