@@ -14,7 +14,6 @@ export default function RootLayout() {
   }, []);
 
   return (
-    
     <SafeAreaView style={{ flex: 1, backgroundColor: "#1A1A1D" }}>
       <StatusBar barStyle="light-content" />
       <Stack
@@ -22,7 +21,6 @@ export default function RootLayout() {
           headerShown: false,
         }}
       />
-
     </SafeAreaView>
   );
 }

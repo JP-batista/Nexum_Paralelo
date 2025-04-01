@@ -13,7 +13,7 @@ interface InputProps extends TextInputProps {
 }
 
 export default function Input({ secure = false, ...rest }: InputProps) {
-  const [isSecure, setIsSecure] = useState(secure);
+  const [isSecure, setIsSecure] = useState(secure); /* A senha inicia oculta */
 
   return (
     <View style={styles.container}>

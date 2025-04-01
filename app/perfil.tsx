@@ -6,24 +6,19 @@ export default function Perfil() {
 
   return (
     <View style={styles.container}>
-      {/* Imagem do perfil */}
-      <Image 
+      <Image
         source={require("../src/assets/images/perfil.png")}
-        style={styles.profileImage} 
+        style={styles.profileImage}
       />
-
-      {/* Nome do usuário */}
       <Text style={styles.userName}>Nome do Usuário</Text>
-
-      {/* Email */}
       <Text style={styles.email}>usuario@email.com</Text>
-
-
       <TouchableOpacity style={styles.button} onPress={() => router.push("/")}>
         <Text style={styles.buttonText}>Editar Perfil</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity style={styles.backButton} onPress={() => router.push("/")}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push("/")}
+      >
         <Text style={styles.backButtonText}>Voltar para Home</Text>
       </TouchableOpacity>
     </View>
