@@ -1,16 +1,29 @@
-import { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import Input from "../src/components/Input";
-import SocialLogin from "../src/components/SocialLogin";
-import CheckBox from "expo-checkbox";
+import { useState } from "react"; /* Hook para gerenciamento de Estados do React (professor falou na aula) */
+import { useRouter } from "expo-router"; /* Função do Expo Router para navegação entre as telas do projeto (tem na documentação) */
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+} from "react-native"; /* importando componentes */
+import Input from "../src/components/Input"; /* Campo  de entrada de dados */
+import SocialLogin from "../src/components/SocialLogin"; /* Botão*/
+import CheckBox from "expo-checkbox"; /* importando o checkbox */
 
-export default function AuthScreen() {
-  const [modo, setModo] = useState<"inicio" | "login" | "cadastro">("inicio");
-  const [termos, setTermos] = useState(false);
+export default function Login() {
+  const [modo, setModo] = useState<"inicio" | "login" | "cadastro">(
+    "inicio"
+  ); /* Utiliza o useState para alterar o estado do modo da tela, semdp que será exibida: inicio, login e cadastro */
+  const [termos, setTermos] =
+    useState(
+      false
+    ); /* O estado de termos será alterado por meio di useState, senndo que a variavel temros é um boolean, que iniciará como falso e mudará conforme o usuário, caso ele aceite os termos de uso */
+  const router =
+    useRouter(); /* Usa o useRouter para navegação entre as telas do app */
 
   return (
     <View style={styles.container}>
-      {/* Logo */}
       <View style={styles.top}>
         <TouchableOpacity onPress={() => setModo("inicio")}>
           <Image
@@ -20,14 +33,15 @@ export default function AuthScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Conteúdo do meio */}
       <View style={styles.middle}>
-        {/* Login */}
         {modo === "login" && (
           <>
             <Input placeholder="Email" placeholderTextColor="#aaa" />
             <Input placeholder="Senha" secure placeholderTextColor="#aaa" />
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push("/perfil")}
+            >
               <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
 
@@ -41,13 +55,16 @@ export default function AuthScreen() {
           </>
         )}
 
-        {/* Cadastro */}
         {modo === "cadastro" && (
           <>
             <Input placeholder="Nome" placeholderTextColor="#aaa" />
             <Input placeholder="Email" placeholderTextColor="#aaa" />
             <Input placeholder="Senha" secure placeholderTextColor="#aaa" />
-            <Input placeholder="Confirmar Senha" secure placeholderTextColor="#aaa" />
+            <Input
+              placeholder="Confirmar Senha"
+              secure
+              placeholderTextColor="#aaa"
+            />
 
             <View style={styles.checkboxContainer}>
               <CheckBox value={termos} onValueChange={setTermos} color="#f90" />
@@ -70,10 +87,12 @@ export default function AuthScreen() {
           </>
         )}
 
-        {/* Tela inicial */}
         {modo === "inicio" && (
           <>
-            <TouchableOpacity style={styles.button} onPress={() => setModo("cadastro")}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setModo("cadastro")}
+            >
               <Text style={styles.buttonText}>Criar conta</Text>
             </TouchableOpacity>
 
@@ -109,7 +128,6 @@ export default function AuthScreen() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
