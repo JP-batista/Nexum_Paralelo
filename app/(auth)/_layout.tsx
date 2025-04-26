@@ -7,6 +7,10 @@ export default function AuthLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
+        animation: "fade", // se quiser uma transição bonita
+        contentStyle: {
+          backgroundColor: "#111", // 👈 aqui muda o fundo durante a troca de tela!
+        },
       }}
     />
   );

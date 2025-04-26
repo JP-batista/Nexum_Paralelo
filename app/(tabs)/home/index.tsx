@@ -1,65 +1,110 @@
 // Arquivo: nexum/app/(tabs)/home/index.tsx
 
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useAuth } from "../../../contexts/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "../../../services/firebase";
-import { useRouter } from "expo-router";
+import { useTmdb } from "../../../contexts/TmdbContext";
+import { View, Text, StyleSheet, ScrollView, FlatList, Image, ActivityIndicator } from "react-native";
 
 export default function HomeScreen() {
-  const { user } = useAuth();
-  const router = useRouter();
+  const { movies, series, loading } = useTmdb();
 
-  async function handleLogout() {
-    await signOut(auth);
-    router.replace("/(auth)/login");
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#f90" />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bem-vindo ao Nexum 👋</Text>
-      
-      <Text style={styles.name}>
-        {user?.displayName 
-          ? `Usuário: ${user.displayName}` 
-          : `Usuário: ${user?.email}`}
-      </Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Início</Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Sair</Text>
-      </TouchableOpacity>
-    </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Filmes Populares</Text>
+        <FlatList
+          horizontal
+          data={movies}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Image
+                source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+                style={styles.cardImage}
+              />
+              <Text style={styles.cardTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Séries Populares</Text>
+        <FlatList
+          horizontal
+          data={series}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Image
+                source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+                style={styles.cardImage}
+              />
+              <Text style={styles.cardTitle} numberOfLines={2}>
+                {item.name}
+              </Text>
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#111",
+    backgroundColor: "#1A1A1D",
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#1A1A1D",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
   },
   title: {
-    fontSize: 24,
+    color: "#fff",
+    fontSize: 26,
     fontWeight: "bold",
-    color: "#f90",
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  name: {
-    fontSize: 18,
-    color: "#ccc",
-    marginBottom: 32,
+  section: {
+    marginBottom: 30,
   },
-  button: {
-    backgroundColor: "#f90",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  card: {
+    marginRight: 12,
+    width: 120,
+  },
+  cardImage: {
+    width: 120,
+    height: 180,
     borderRadius: 8,
+    backgroundColor: "#333",
   },
-  buttonText: {
-    color: "#000",
-    fontWeight: "bold",
-    fontSize: 16,
+  cardTitle: {
+    color: "#fff",
+    fontSize: 14,
+    marginTop: 6,
   },
 });

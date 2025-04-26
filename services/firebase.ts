@@ -2,8 +2,9 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-
+// Sua configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAm3SjfedThFlZjBy7ZXSyk1ZRNkMdLo4g",
     authDomain: "nexum-f9dd7.firebaseapp.com",
@@ -13,8 +14,12 @@ const firebaseConfig = {
     appId: "1:1002459896279:web:841b85b3abf025e8f15392"
 };
 
-// Inicializa o Firebase App
+// Inicializar o app
 const app = initializeApp(firebaseConfig);
 
-// Exporta o módulo de autenticação
+// Exportar a autenticação
 export const auth = getAuth(app);
+
+// Exportar o banco de dados (Firestore)
+export const db = getFirestore(app);
+

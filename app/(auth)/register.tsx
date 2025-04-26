@@ -1,10 +1,13 @@
+// Arquivo: nexum/app/(auth)/register.tsx
+
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from "react-native";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../../services/firebase";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import Logo from "@/assets/images/logo.png";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth, db } from "../../services/firebase";
+import { setDoc, doc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
+import Logo from "@/assets/images/logo.png"; // Imagem da logo do Nexum
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -14,9 +17,10 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
-    if (!email || !password || !confirmPassword || !name) {
+    if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
@@ -27,13 +31,25 @@ export default function RegisterScreen() {
     }
 
     try {
+      setLoading(true);
+
+      // Criar usuário no Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      await updateProfile(user, {
+      // Atualizar o nome de exibição
+      await updateProfile(user, { displayName: name });
+
+      // Salvar dados no Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
         displayName: name,
+        phoneNumber: "",
+        socialLinks: [],
       });
 
+      Alert.alert("Sucesso", "Conta criada com sucesso!");
       router.replace("/home");
     } catch (error: any) {
       console.error(error);
@@ -42,99 +58,102 @@ export default function RegisterScreen() {
       } else {
         Alert.alert("Erro", "Não foi possível criar a conta.");
       }
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Image source={Logo} style={styles.logo} resizeMode="contain" />
 
-      <View style={styles.form}>
-        <Text style={styles.title}>Criar Conta</Text>
+      <Text style={styles.title}>Criar Conta</Text>
 
+      <TextInput
+        style={styles.input}
+        placeholder="Nome"
+        placeholderTextColor="#aaa"
+        value={name}
+        onChangeText={setName}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        placeholderTextColor="#aaa"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+
+      {/* Campo de senha */}
+      <View style={styles.passwordContainer}>
         <TextInput
-          style={styles.input}
-          placeholder="Nome"
+          style={styles.passwordInput}
+          placeholder="Senha"
           placeholderTextColor="#aaa"
-          value={name}
-          onChangeText={setName}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
         />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#aaa"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.passwordInput}
-            placeholder="Senha"
-            placeholderTextColor="#aaa"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons
+            name={showPassword ? "eye-off-outline" : "eye-outline"}
+            size={24}
+            color="#aaa"
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Ionicons
-              name={showPassword ? "eye-off-outline" : "eye-outline"}
-              size={24}
-              color="#aaa"
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.passwordInput}
-            placeholder="Confirmar Senha"
-            placeholderTextColor="#aaa"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry={!showConfirmPassword}
-          />
-          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-            <Ionicons
-              name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-              size={24}
-              color="#aaa"
-            />
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Cadastrar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-          <Text style={styles.link}>Já tem conta? Entrar</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      {/* Campo de confirmar senha */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Confirmar Senha"
+          placeholderTextColor="#aaa"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry={!showConfirmPassword}
+        />
+        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+          <Ionicons
+            name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+            size={24}
+            color="#aaa"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#f90" style={{ marginVertical: 16 }} />
+      ) : (
+        <>
+          <TouchableOpacity style={styles.button} onPress={handleRegister}>
+            <Text style={styles.buttonText}>Cadastrar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
+            <Text style={styles.link}>Já tem conta? Entrar</Text>
+          </TouchableOpacity>
+        </>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#111",
-    justifyContent: "flex-start",
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
   },
   logo: {
     width: 250,
     height: 100,
-    alignSelf: "center",
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  form: {
-    marginTop: 40,
+    marginBottom: 40,
   },
   title: {
     fontSize: 28,
@@ -173,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
-    marginBottom: 16, // espaço extra antes do link
+    marginBottom: 16,
   },
   buttonText: {
     color: "#000",

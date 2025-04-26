@@ -5,6 +5,7 @@ import { useAuth, AuthProvider } from "../contexts/AuthContext";
 import { View, ActivityIndicator } from "react-native";
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
+import { TmdbProvider } from "../contexts/TmdbContext"; // 👈 Importar o TMDB Provider
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
@@ -32,7 +33,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <TmdbProvider> {/* 👈 Agora o TMDB Provider envolve tudo! */}
+        <RootLayoutNav />
+      </TmdbProvider>
     </AuthProvider>
   );
 }
