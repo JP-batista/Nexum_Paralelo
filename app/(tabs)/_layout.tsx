@@ -10,42 +10,41 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#1A1A1D",
           borderTopColor: "#333",
-          height: 70,
-          paddingBottom: 10,
-          paddingTop: 5,
+          height: 60,
+          paddingBottom: 8,
         },
         headerShown: false,
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="(home)/index"
         options={{
           title: "Início",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={26} />
+            <Ionicons name="home-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="programacao"
+        name="(programacao)/index"
         options={{
           title: "Programação",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" color={color} size={26} />
+            <Ionicons name="calendar-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="perfil"
+        name="(perfil)/index"
         options={{
           title: "Perfil",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" color={color} size={26} />
+            <Ionicons name="person-circle-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="perfil/editar"
+        name="(perfil)/editar"
         options={{
           href: null,
         }}

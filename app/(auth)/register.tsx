@@ -1,13 +1,12 @@
 // Arquivo: nexum/app/(auth)/register.tsx
 
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image } from "react-native";
+import { auth } from "../../services/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth, db } from "../../services/firebase";
-import { setDoc, doc } from "firebase/firestore";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import Logo from "@/assets/images/logo.png"; // Imagem da logo do Nexum
+import Logo from "@/assets/images/logo.png"; // Importa a logo
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -17,10 +16,9 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
-    if (!name || !email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !name) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
@@ -31,26 +29,15 @@ export default function RegisterScreen() {
     }
 
     try {
-      setLoading(true);
-
-      // Criar usuário no Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Atualizar o nome de exibição
-      await updateProfile(user, { displayName: name });
-
-      // Salvar dados no Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
+      await updateProfile(user, {
         displayName: name,
-        phoneNumber: "",
-        socialLinks: [],
       });
 
-      Alert.alert("Sucesso", "Conta criada com sucesso!");
       router.replace("/home");
+
     } catch (error: any) {
       console.error(error);
       if (error.code === "auth/email-already-in-use") {
@@ -58,13 +45,19 @@ export default function RegisterScreen() {
       } else {
         Alert.alert("Erro", "Não foi possível criar a conta.");
       }
-    } finally {
-      setLoading(false);
     }
   }
 
+  function toggleShowPassword() {
+    setShowPassword(!showPassword);
+  }
+
+  function toggleShowConfirmPassword() {
+    setShowConfirmPassword(!showConfirmPassword);
+  }
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Image source={Logo} style={styles.logo} resizeMode="contain" />
 
       <Text style={styles.title}>Criar Conta</Text>
@@ -87,7 +80,6 @@ export default function RegisterScreen() {
         keyboardType="email-address"
       />
 
-      {/* Campo de senha */}
       <View style={styles.passwordContainer}>
         <TextInput
           style={styles.passwordInput}
@@ -97,7 +89,7 @@ export default function RegisterScreen() {
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+        <TouchableOpacity onPress={toggleShowPassword}>
           <Ionicons
             name={showPassword ? "eye-off-outline" : "eye-outline"}
             size={24}
@@ -106,7 +98,6 @@ export default function RegisterScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Campo de confirmar senha */}
       <View style={styles.passwordContainer}>
         <TextInput
           style={styles.passwordInput}
@@ -116,7 +107,7 @@ export default function RegisterScreen() {
           onChangeText={setConfirmPassword}
           secureTextEntry={!showConfirmPassword}
         />
-        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+        <TouchableOpacity onPress={toggleShowConfirmPassword}>
           <Ionicons
             name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
             size={24}
@@ -125,35 +116,30 @@ export default function RegisterScreen() {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#f90" style={{ marginVertical: 16 }} />
-      ) : (
-        <>
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Cadastrar</Text>
-          </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Cadastrar</Text>
+      </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-            <Text style={styles.link}>Já tem conta? Entrar</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </ScrollView>
+      <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
+        <Text style={styles.link}>Já tem conta? Entrar</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: "#111",
-    alignItems: "center",
-    justifyContent: "center",
     padding: 24,
+    justifyContent: "center",
   },
   logo: {
     width: 250,
     height: 100,
-    marginBottom: 40,
+    alignSelf: "center",
+    marginTop: 20,
+    marginBottom: 80,
   },
   title: {
     fontSize: 28,
@@ -163,12 +149,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   input: {
-    width: "100%",
     backgroundColor: "#222",
+    color: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     height: 48,
-    color: "#fff",
     marginBottom: 16,
   },
   passwordContainer: {
@@ -187,12 +172,9 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#f90",
     borderRadius: 8,
-    width: "100%",
     height: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
-    marginBottom: 16,
   },
   buttonText: {
     color: "#000",
@@ -201,7 +183,7 @@ const styles = StyleSheet.create({
   },
   link: {
     color: "#f90",
-    fontSize: 14,
     textAlign: "center",
+    marginTop: 16,
   },
 });

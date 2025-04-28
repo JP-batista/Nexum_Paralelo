@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { useAuth } from "../../../contexts/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../../services/firebase";
+import { auth, db } from "../../../services/firebase";
+import { updateProfile } from "firebase/auth";
 import { useRouter } from "expo-router";
 
 export default function EditarPerfilScreen() {
@@ -19,18 +20,22 @@ export default function EditarPerfilScreen() {
   useEffect(() => {
     async function fetchProfile() {
       if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setDisplayName(data.displayName || "");
-          setPhoneNumber(data.phoneNumber || "");
-          setSocialLinks(data.socialLinks || ["", "", ""]);
-        } else {
-          setDisplayName(user.displayName || "");
-          setPhoneNumber("");
-          setSocialLinks(["", "", ""]);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setDisplayName(data.displayName || "");
+            setPhoneNumber(data.phoneNumber || "");
+            setSocialLinks(data.socialLinks || ["", "", ""]);
+          } else {
+            setDisplayName(user.displayName || "");
+            setPhoneNumber("");
+            setSocialLinks(["", "", ""]);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar perfil:", error);
         }
       }
     }
@@ -46,16 +51,24 @@ export default function EditarPerfilScreen() {
     try {
       setLoading(true);
 
+      // Atualizar nome no Auth (user profile)
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: displayName,
+        });
+      }
+
+      // Atualizar também no Firestore
       await setDoc(doc(db, "users", user!.uid), {
         uid: user!.uid,
         email: user!.email,
-        displayName,
-        phoneNumber,
-        socialLinks: socialLinks.filter(link => link.trim() !== ""), // Remove links vazios
+        displayName: displayName,
+        phoneNumber: phoneNumber,
+        socialLinks: socialLinks.filter(link => link.trim() !== ""), // remove links vazios
       });
 
       Alert.alert("Sucesso", "Perfil atualizado!");
-      router.back(); // Volta para o Perfil
+      router.back();
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Não foi possível atualizar o perfil.");
@@ -91,6 +104,7 @@ export default function EditarPerfilScreen() {
         keyboardType="phone-pad"
       />
 
+      {/* Campos de Links de Redes Sociais */}
       {socialLinks.map((link, index) => (
         <TextInput
           key={index}

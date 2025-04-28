@@ -40,25 +40,7 @@ export default function PerfilScreen() {
     }
   }
 
-  function detectSocialIcon(link: string) {
-    if (link.includes("instagram.com")) {
-      return <FontAwesome name="instagram" size={24} color="#f90" />;
-    }
-    if (link.includes("twitter.com")) {
-      return <FontAwesome name="twitter" size={24} color="#1DA1F2" />;
-    }
-    if (link.includes("linkedin.com")) {
-      return <FontAwesome name="linkedin" size={24} color="#0077b5" />;
-    }
-    return <Ionicons name="link-outline" size={24} color="#ccc" />;
-  }
 
-  function detectSocialName(link: string) {
-    if (link.includes("instagram.com")) return "Instagram";
-    if (link.includes("twitter.com")) return "Twitter";
-    if (link.includes("linkedin.com")) return "LinkedIn";
-    return "Rede Social";
-  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -81,21 +63,6 @@ export default function PerfilScreen() {
           </View>
         )}
 
-        {userData?.socialLinks?.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Redes Sociais</Text>
-            {userData.socialLinks.map((link: string, index: number) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.socialItem}
-                onPress={() => Linking.openURL(link)}
-              >
-                {detectSocialIcon(link)}
-                <Text style={styles.socialText}>{detectSocialName(link)}</Text>
-              </TouchableOpacity>
-            ))}
-          </>
-        )}
       </View>
 
       <TouchableOpacity style={styles.editButton} onPress={() => router.push("/(tabs)/perfil/editar")}>
