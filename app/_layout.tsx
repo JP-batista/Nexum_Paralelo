@@ -5,7 +5,7 @@ import { useAuth, AuthProvider } from "../contexts/AuthContext";
 import { View, ActivityIndicator } from "react-native";
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
-import { TmdbProvider } from "../contexts/TmdbContext"; // 👈 Importar o TMDB Provider
+import { TmdbProvider } from "../contexts/TmdbContext"; 
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();

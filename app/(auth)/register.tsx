@@ -1,12 +1,9 @@
-// Arquivo: nexum/app/(auth)/register.tsx
-
-import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image } from "react-native";
-import { auth } from "../../services/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { useRouter } from "expo-router";
+import Logo from "@/assets/images/logo.png";
 import { Ionicons } from "@expo/vector-icons";
-import Logo from "@/assets/images/logo.png"; // Importa a logo
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -16,44 +13,36 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [modalErro, setModalErro] = useState(false);
+  const [mensagemErro, setMensagemErro] = useState("");
+
+  const { signUp } = useAuth();
 
   async function handleRegister() {
     if (!email || !password || !confirmPassword || !name) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+      setMensagemErro("Preencha todos os campos!");
+      setModalErro(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Erro", "As senhas não coincidem!");
+      setMensagemErro("As senhas não coincidem!");
+      setModalErro(true);
       return;
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: name,
-      });
-
-      router.replace("/home");
-
+      await signUp(email, password);
+      router.replace("/(tabs)/(home)");
     } catch (error: any) {
-      console.error(error);
-      if (error.code === "auth/email-already-in-use") {
-        Alert.alert("Erro", "Este e-mail já está cadastrado.");
+      console.error("Erro no cadastro:", error);
+      if (error.message.includes("already registered")) {
+        setMensagemErro("Este e-mail já está cadastrado.");
       } else {
-        Alert.alert("Erro", "Não foi possível criar a conta.");
+        setMensagemErro("Não foi possível criar a conta.");
       }
+      setModalErro(true);
     }
-  }
-
-  function toggleShowPassword() {
-    setShowPassword(!showPassword);
-  }
-
-  function toggleShowConfirmPassword() {
-    setShowConfirmPassword(!showConfirmPassword);
   }
 
   return (
@@ -89,12 +78,8 @@ export default function RegisterScreen() {
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
         />
-        <TouchableOpacity onPress={toggleShowPassword}>
-          <Ionicons
-            name={showPassword ? "eye-off-outline" : "eye-outline"}
-            size={24}
-            color="#aaa"
-          />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#aaa" />
         </TouchableOpacity>
       </View>
 
@@ -107,12 +92,8 @@ export default function RegisterScreen() {
           onChangeText={setConfirmPassword}
           secureTextEntry={!showConfirmPassword}
         />
-        <TouchableOpacity onPress={toggleShowConfirmPassword}>
-          <Ionicons
-            name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-            size={24}
-            color="#aaa"
-          />
+        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+          <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#aaa" />
         </TouchableOpacity>
       </View>
 
@@ -123,11 +104,68 @@ export default function RegisterScreen() {
       <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
         <Text style={styles.link}>Já tem conta? Entrar</Text>
       </TouchableOpacity>
+
+      <Modal transparent visible={modalErro} animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setModalErro(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitulo}>❌ Erro</Text>
+            <Text style={styles.modalMensagem}>{mensagemErro}</Text>
+            <TouchableOpacity
+              style={[styles.modalBotao, styles.botaoCancelar]}
+              onPress={() => setModalErro(false)}
+            >
+              <Text style={[styles.modalOpcao, { color: "#999" }]}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "#000000aa",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#222",
+    padding: 24,
+    borderRadius: 12,
+    width: "80%",
+  },
+  modalTitulo: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  modalMensagem: {
+    color: "#ccc",
+    fontSize: 15,
+    marginTop: 8,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  modalBotao: {
+    borderWidth: 1,
+    borderColor: "#555",
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  modalOpcao: {
+    color: "#f90",
+    fontSize: 15,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  botaoCancelar: {
+    borderColor: "#333",
+  },
   container: {
     flex: 1,
     backgroundColor: "#111",

@@ -8,138 +8,396 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  getMoviesByGenreAndProvider,
+  getSeriesByGenreAndProvider,
+  searchMovies,
+  searchSeries,
+} from "../../../services/tmdb";
+import Logo from "@/assets/images/Icon2.png";
 
 const CATEGORIAS = [
   { nome: "Ação", id: 28 },
+  { nome: "Aventura", id: 12 },
+  { nome: "Animação", id: 16 },
   { nome: "Comédia", id: 35 },
+  { nome: "Crime", id: 80 },
+  { nome: "Documentário", id: 99 },
+  { nome: "Drama", id: 18 },
+  { nome: "Família", id: 10751 },
+  { nome: "Fantasia", id: 14 },
+  { nome: "História", id: 36 },
+  { nome: "Terror", id: 27 },
+  { nome: "Musical", id: 10402 },
+  { nome: "Mistério", id: 9648 },
+  { nome: "Romance", id: 10749 },
   { nome: "Ficção Científica", id: 878 },
+  { nome: "Cinema TV", id: 10770 },
+  { nome: "Thriller", id: 53 },
+  { nome: "Guerra", id: 10752 },
+  { nome: "Faroeste", id: 37 },
 ];
 
 const STREAMINGS = [
+  { nome: "Todos", id: 0 },
   { nome: "Netflix", id: 8 },
   { nome: "Prime Video", id: 119 },
   { nome: "Disney+", id: 337 },
+  { nome: "Max", id: 384 },
+  { nome: "Globoplay", id: 307 },
+  { nome: "Apple TV+", id: 350 },
+  { nome: "Paramount+", id: 531 },
+  { nome: "Crunchyroll", id: 283 },
 ];
 
-const API_OPTIONS = {
-  method: "GET",
-  headers: {
-    accept: "application/json",
-    Authorization:
-      "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTI4M2ExNGZjMDAyNmVmNjY2ODc4ZmRhOTljYTNhZiIsIm5iZiI6MTc0NTYwMDU4OS43OTEwMDAxLCJzdWIiOiI2ODBiYzA0ZGU5MmY5NDBjYTY5ZDVmZTMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.cw9A7zCkx837i_K778P_XEhrNJUVAl3U1kMLUKErOkY",
-  },
-};
-
-export default function Categorias() {
+export default function HomeScreen() {
   const [conteudos, setConteudos] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [provedorSelecionado, setProvedorSelecionado] = useState(STREAMINGS[0]);
+  const [tipoConteudo, setTipoConteudo] = useState<"filme" | "serie">("filme");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilmes, setSearchFilmes] = useState<any[]>([]);
+  const [searchSeriesResult, setSearchSeriesResult] = useState<any[]>([]);
+  const router = useRouter();
+  const providerId = provedorSelecionado?.id ?? 0;
+  const idsExibidos = new Set();
 
   useEffect(() => {
-    const fetchConteudos = async () => {
-      setLoading(true);
-      const resultados: Record<string, any[]> = {};
-      for (const categoria of CATEGORIAS) {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/discover/movie?with_genres=${categoria.id}&sort_by=popularity.desc&language=pt-BR&watch_region=BR&with_watch_providers=${provedorSelecionado.id}`,
-          API_OPTIONS
-        );
-        const data = await res.json();
-        resultados[categoria.nome] = data.results;
-      }
-      setConteudos(resultados);
-      setLoading(false);
-    };
-    fetchConteudos();
-  }, [provedorSelecionado]);
+    if (searchTerm.trim() === "") {
+      fetchConteudos();
+    }
+  }, [provedorSelecionado, tipoConteudo]);
+
+  async function fetchConteudos() {
+    setLoading(true);
+    const resultados: Record<string, any[]> = {};
+
+    for (const categoria of CATEGORIAS) {
+      const dados =
+        tipoConteudo === "filme"
+          ? await getMoviesByGenreAndProvider(
+              categoria.id,
+              providerId === 0 ? undefined as unknown as number : providerId
+            )
+          : await getSeriesByGenreAndProvider(
+              categoria.id,
+              providerId === 0 ? undefined : providerId
+            );
+
+      resultados[categoria.nome] = dados;
+    }
+
+    setConteudos(resultados);
+    setLoading(false);
+  }
+
+  async function handleSearch() {
+    if (searchTerm.trim() === "") {
+      setSearchFilmes([]);
+      setSearchSeriesResult([]);
+      fetchConteudos();
+      return;
+    }
+
+    setLoading(true);
+    const [filmes, series] = await Promise.all([
+      searchMovies(searchTerm),
+      searchSeries(searchTerm),
+    ]);
+    setSearchFilmes(filmes);
+    setSearchSeriesResult(series);
+    setLoading(false);
+  }
+
+
+  function handleSelectItem(item: any) {
+    const tipo = item.title ? "movie" : "tv";
+  
+    router.push({
+      pathname: tipo === "movie" ? "/(tabs)/(home)/detalhesFilme" : "/(tabs)/(home)/detalhesSerie",
+      params: {
+        id: item.id.toString(),
+        tipo,
+      },
+    });
+  }
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Descubra por Categoria</Text>
-
-      {/* Filtro por streaming */}
-      <View style={styles.filtros}>
-        {STREAMINGS.map((prov) => (
-          <TouchableOpacity
-            key={prov.id}
-            style={
-              prov.id === provedorSelecionado.id
-                ? styles.filtroAtivo
-                : styles.filtro
-            }
-            onPress={() => setProvedorSelecionado(prov)}
-          >
-            <Text
-              style={
-                prov.id === provedorSelecionado.id
-                  ? styles.filtroAtivoTexto
-                  : styles.filtroTexto
-              }
-            >
-              {prov.nome}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* Header */}
+      {/* Logo e título */}
+      <View style={styles.header}>
+        <Image source={Logo} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.title}>Descubra Filmes</Text>
       </View>
 
+      {/* Campo de busca */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar filme ou série..."
+          placeholderTextColor="#aaa"
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          onSubmitEditing={handleSearch}
+        />
+      </View>
+
+      {/* Botões de tipo de conteúdo */}
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[
+            styles.toggleButtonUnified,
+            tipoConteudo === "filme" && styles.toggleButtonActive,
+            { borderTopLeftRadius: 8, borderBottomLeftRadius: 8 },
+          ]}
+          onPress={() => {
+            setTipoConteudo("filme");
+            setSearchFilmes([]);
+            setSearchSeriesResult([]);
+            setSearchTerm("");
+          }}
+        >
+          <Text
+            style={[
+              styles.toggleButtonText,
+              tipoConteudo === "filme" && styles.toggleButtonTextActive,
+            ]}
+          >
+            Filmes
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.toggleButtonUnified,
+            tipoConteudo === "serie" && styles.toggleButtonActive,
+            { borderTopRightRadius: 8, borderBottomRightRadius: 8 },
+          ]}
+          onPress={() => {
+            setTipoConteudo("serie");
+            setSearchFilmes([]);
+            setSearchSeriesResult([]);
+            setSearchTerm("");
+          }}
+        >
+          <Text
+            style={[
+              styles.toggleButtonText,
+              tipoConteudo === "serie" && styles.toggleButtonTextActive,
+            ]}
+          >
+            Séries
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+
+      {/* Filtro por streaming */}
+      <View style={styles.filtrosContainer}>
+        <FlatList
+          horizontal
+          data={STREAMINGS}
+          keyExtractor={(item) => item.id.toString()}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtros}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                item.id === provedorSelecionado.id ? styles.filtroAtivo : styles.filtro,
+                { marginRight: 8 },
+              ]}
+              onPress={() => {
+                setProvedorSelecionado(item);
+                setSearchFilmes([]);
+                setSearchSeriesResult([]);
+                setSearchTerm("");
+              }}
+            >
+              <Text
+                style={
+                  item.id === provedorSelecionado.id
+                    ? styles.filtroAtivoTexto
+                    : styles.filtroTexto
+                }
+              >
+                {item.nome}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      {/* Resultados da busca */}
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#f90" />
         </View>
-      ) : (
-        CATEGORIAS.map((cat) => (
-          <View key={cat.nome} style={styles.section}>
-            <Text style={styles.sectionTitle}>{cat.nome}</Text>
+      ) : searchTerm.trim() !== "" ? (
+        <>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Filmes encontrados</Text>
             <FlatList
               horizontal
-              data={conteudos[cat.nome]}
+              data={searchFilmes}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <TouchableOpacity style={styles.card} onPress={() => handleSelectItem(item)}>
                   <Image
-                    source={{
-                      uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
-                    }}
+                    source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
                     style={styles.cardImage}
                   />
                   <Text style={styles.cardTitle} numberOfLines={2}>
                     {item.title || item.name}
                   </Text>
-                </View>
+                </TouchableOpacity>
               )}
               showsHorizontalScrollIndicator={false}
             />
           </View>
-        ))
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Séries encontradas</Text>
+            <FlatList
+              horizontal
+              data={searchSeriesResult}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.card} onPress={() => handleSelectItem(item)}>
+                  <Image
+                    source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+                    style={styles.cardImage}
+                  />
+                  <Text style={styles.cardTitle} numberOfLines={2}>
+                    {item.name || item.title}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        </>
+      ) : (
+        CATEGORIAS.map((cat) => {
+          const lista = conteudos[cat.nome];
+          if (!lista || lista.length === 0) return null;
+        
+          return (
+            <View key={cat.nome} style={styles.section}>
+              <Text style={styles.sectionTitle}>{cat.nome}</Text>
+              <FlatList
+                horizontal
+                data={lista.filter((item) => {
+                  if (idsExibidos.has(item.id)) return false;
+                  idsExibidos.add(item.id);
+                  return true;
+                })}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.card} onPress={() => handleSelectItem(item)}>
+                    <Image
+                      source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+                      style={styles.cardImage}
+                    />
+                    <Text style={styles.cardTitle} numberOfLines={2}>
+                      {item.title || item.name}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                showsHorizontalScrollIndicator={false}
+              />
+            </View>
+          );
+        })        
       )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  toggleContainer: {
+    flexDirection: "row",
+    alignSelf: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#444",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  
+  toggleButtonUnified: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#1A1A1D",
+    alignItems: "center",
+  },
+  
+  toggleButtonActive: {
+    backgroundColor: "#f90",
+  },
+  
+  toggleButtonText: {
+    color: "#aaa",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  
+  toggleButtonTextActive: {
+    color: "#000",
+  },
   container: {
     flex: 1,
     backgroundColor: "#1A1A1D",
     paddingHorizontal: 20,
     paddingTop: 40,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+  },
   title: {
     color: "#fff",
     fontSize: 26,
     fontWeight: "bold",
-    marginBottom: 12,
+  },
+  searchContainer: {
+    marginBottom: 16,
+  },
+  searchInput: {
+    backgroundColor: "#222",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    height: 48,
+    color: "#fff",
+  },
+  toggleButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#333",
+    borderRadius: 20,
+  },
+  filtrosContainer: {
+    marginBottom: 24,
   },
   filtros: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 24,
+    gap: 8,
+    paddingRight: 8,
   },
   filtro: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: "#333",
     borderRadius: 20,
+    marginBottom: 8,
   },
   filtroTexto: {
     color: "#aaa",
@@ -149,6 +407,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "#f90",
     borderRadius: 20,
+    marginBottom: 8,
   },
   filtroAtivoTexto: {
     color: "#000",

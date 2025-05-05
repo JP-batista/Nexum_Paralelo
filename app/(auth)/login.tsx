@@ -1,29 +1,34 @@
-// Arquivo: nexum/app/(auth)/login.tsx
+// 📄 nexum/app/(auth)/login.tsx
 
-import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from "react-native";
+import Logo from "@/assets/images/logo.png";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../services/firebase";
-import Logo from "@/assets/images/logo.png"; // Importa a logo
+import { useState } from "react";
+import { Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [modalErro, setModalErro] = useState(false);
+  const [mensagemErro, setMensagemErro] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const { signIn } = useAuth();
 
   async function handleLogin() {
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+      setMensagemErro("Preencha todos os campos!");
+      setModalErro(true);
       return;
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/home");
+      await signIn(email, password);
+      router.replace("/(tabs)/(home)");
     } catch (error: any) {
-      console.error(error);
-      Alert.alert("Erro", "Email ou senha incorretos!");
+      setMensagemErro("Email ou senha incorretos!");
+      setModalErro(true);
     }
   }
 
@@ -43,15 +48,23 @@ export default function LoginScreen() {
         keyboardType="email-address"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Senha"
+          placeholderTextColor="#aaa"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons
+            name={showPassword ? "eye-off-outline" : "eye-outline"}
+            size={24}
+            color="#aaa"
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Entrar</Text>
@@ -60,11 +73,73 @@ export default function LoginScreen() {
       <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
         <Text style={styles.link}>Criar uma conta</Text>
       </TouchableOpacity>
+
+      <Modal transparent visible={modalErro} animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setModalErro(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalMensagem}>{mensagemErro}</Text>
+            <TouchableOpacity
+              style={[styles.modalBotao, styles.botaoCancelar]}
+              onPress={() => setModalErro(false)}
+            >
+              <Text style={[styles.modalOpcao, { color: "#999" }]}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  passwordContainer: {
+    backgroundColor: "#222",
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    height: 48,
+    marginBottom: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    color: "#fff",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "#000000aa",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#222",
+    padding: 24,
+    borderRadius: 12,
+    width: "80%",
+  },
+  modalMensagem: {
+    color: "#ccc",
+    fontSize: 15,
+    marginTop: 8,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  modalBotao: {
+    borderWidth: 1,
+    borderColor: "#555",
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  modalOpcao: {
+    color: "#f90",
+    fontSize: 15,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  botaoCancelar: {
+    borderColor: "#333",
+  },
   container: {
     flex: 1,
     backgroundColor: "#111",
