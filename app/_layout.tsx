@@ -1,31 +1,21 @@
 // Arquivo: nexum/app/_layout.tsx
 
-import { Slot, SplashScreen } from "expo-router";
+import { Slot } from "expo-router";
 import { useAuth, AuthProvider } from "../contexts/AuthContext";
-import { View, ActivityIndicator } from "react-native";
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
-import { TmdbProvider } from "../contexts/TmdbContext"; 
+import { TmdbProvider } from "../contexts/TmdbContext"; // 👈 Importar o TMDB Provider
+import { StatusBar } from "expo-status-bar"; // 👈 Importa o StatusBar
 
 function RootLayoutNav() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace("/(auth)/login");
-      }
+    if (!user) {
+      router.replace("/(auth)/login");
     }
-  }, [user, loading]);
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#111" }}>
-        <ActivityIndicator size="large" color="#f90" />
-      </View>
-    );
-  }
+  }, [user]);
 
   return <Slot />;
 }
@@ -33,7 +23,8 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <TmdbProvider> {/* 👈 Agora o TMDB Provider envolve tudo! */}
+      <TmdbProvider>
+        <StatusBar style="light" backgroundColor="#111111" translucent={false} />
         <RootLayoutNav />
       </TmdbProvider>
     </AuthProvider>

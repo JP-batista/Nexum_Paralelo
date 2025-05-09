@@ -1,76 +1,47 @@
-// 📄 contexts/AuthContext.tsx
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../services/supabase';
-import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+// Arquivo: nexum/contexts/AuthContext.tsx
 
-type User = {
-  id: string;
-  email: string;
-} | null;
+import { createContext, useContext, useEffect, useState} from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "../services/firebase";
+import { View, ActivityIndicator } from "react-native";
 
-const AuthContext = createContext<{
-  user: User;
+interface AuthContextProps {
+  user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-}>({
+}
+
+const AuthContext = createContext<AuthContextProps>({
   user: null,
   loading: true,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User>(null);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  function mapUser(supabaseUser: SupabaseUser | null): User {
-    if (!supabaseUser) return null;
-    return {
-      id: supabaseUser.id,
-      email: supabaseUser.email ?? '',
-    };
-  }
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(mapUser(data.session?.user ?? null));
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
     });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(mapUser(session?.user ?? null));
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
+  
 
-  const signIn = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    setUser(mapUser(data.user));
-  };
-
-  const signUp = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    setUser(mapUser(data.user));
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#111" }}>
+        <ActivityIndicator size="large" color="#f90" />
+      </View>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
 
 export const useAuth = () => useContext(AuthContext);

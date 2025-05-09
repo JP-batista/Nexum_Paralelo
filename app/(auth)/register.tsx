@@ -1,9 +1,13 @@
-import Logo from "@/assets/images/logo.png";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+// Arquivo: nexum/app/(auth)/register.tsx
+
 import { useState } from "react";
-import { Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../../contexts/AuthContext";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Modal, Pressable  } from "react-native";
+import { auth } from "../../services/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Logo from "@/assets/images/logo.png"; // Importa a logo
+import { criarUsuarioFirestore } from "@/services/firestore"
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -16,33 +20,54 @@ export default function RegisterScreen() {
   const [modalErro, setModalErro] = useState(false);
   const [mensagemErro, setMensagemErro] = useState("");
 
-  const { signUp } = useAuth();
-
   async function handleRegister() {
     if (!email || !password || !confirmPassword || !name) {
       setMensagemErro("Preencha todos os campos!");
       setModalErro(true);
       return;
     }
-
+  
     if (password !== confirmPassword) {
       setMensagemErro("As senhas não coincidem!");
       setModalErro(true);
       return;
     }
-
+  
     try {
-      await signUp(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+  
+      await updateProfile(user, {
+        displayName: name,
+      });
+  
+      try {
+        await criarUsuarioFirestore(user.uid, name, email);
+      } catch (firestoreError) {
+        console.error("Erro ao criar usuário no Firestore:", firestoreError);
+        setMensagemErro("Não foi possível salvar as informações no banco de dados.");
+        setModalErro(true);
+        return;
+      }
+  
       router.replace("/(tabs)/(home)");
     } catch (error: any) {
       console.error("Erro no cadastro:", error);
-      if (error.message.includes("already registered")) {
+      if (error.code === "auth/email-already-in-use") {
         setMensagemErro("Este e-mail já está cadastrado.");
       } else {
         setMensagemErro("Não foi possível criar a conta.");
       }
       setModalErro(true);
     }
+  }  
+
+  function toggleShowPassword() {
+    setShowPassword(!showPassword);
+  }
+
+  function toggleShowConfirmPassword() {
+    setShowConfirmPassword(!showConfirmPassword);
   }
 
   return (
@@ -78,8 +103,12 @@ export default function RegisterScreen() {
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#aaa" />
+        <TouchableOpacity onPress={toggleShowPassword}>
+          <Ionicons
+            name={showPassword ? "eye-off-outline" : "eye-outline"}
+            size={24}
+            color="#aaa"
+          />
         </TouchableOpacity>
       </View>
 
@@ -92,8 +121,12 @@ export default function RegisterScreen() {
           onChangeText={setConfirmPassword}
           secureTextEntry={!showConfirmPassword}
         />
-        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#aaa" />
+        <TouchableOpacity onPress={toggleShowConfirmPassword}>
+          <Ionicons
+            name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+            size={24}
+            color="#aaa"
+          />
         </TouchableOpacity>
       </View>
 
@@ -165,7 +198,7 @@ const styles = StyleSheet.create({
   },
   botaoCancelar: {
     borderColor: "#333",
-  },
+  },  
   container: {
     flex: 1,
     backgroundColor: "#111",

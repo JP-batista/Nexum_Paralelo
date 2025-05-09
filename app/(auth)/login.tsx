@@ -1,11 +1,13 @@
-// 📄 nexum/app/(auth)/login.tsx
+// Arquivo: nexum/app/(auth)/login.tsx
 
-import Logo from "@/assets/images/logo.png";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../../contexts/AuthContext";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, Modal, Pressable  } from "react-native";
+import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../services/firebase";
+import Logo from "@/assets/images/logo.png"; // Importa a logo
+import { sendPasswordResetEmail } from "firebase/auth";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,7 +16,6 @@ export default function LoginScreen() {
   const [modalErro, setModalErro] = useState(false);
   const [mensagemErro, setMensagemErro] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn } = useAuth();
 
   async function handleLogin() {
     if (!email || !password) {
@@ -22,16 +23,35 @@ export default function LoginScreen() {
       setModalErro(true);
       return;
     }
-
+  
     try {
-      await signIn(email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       router.replace("/(tabs)/(home)");
     } catch (error: any) {
+      console.error(error);
       setMensagemErro("Email ou senha incorretos!");
+      setModalErro(true);
+    }
+  } 
+
+  async function handleEsqueciSenha() {
+    if (!email) {
+      setMensagemErro("Informe seu e-mail para redefinir a senha.");
+      setModalErro(true);
+      return;
+    }
+  
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMensagemErro("Enviamos um link de redefinição para seu e-mail.");
+      setModalErro(true);
+    } catch (error: any) {
+      setMensagemErro("Erro ao enviar e-mail de redefinição.");
       setModalErro(true);
     }
   }
 
+  
   return (
     <View style={styles.container}>
       <Image source={Logo} style={styles.logo} resizeMode="contain" />
@@ -48,21 +68,31 @@ export default function LoginScreen() {
         keyboardType="email-address"
       />
 
-      <View style={styles.passwordContainer}>
+      <View style={styles.inputWrapper}>
         <TextInput
-          style={styles.passwordInput}
+          style={styles.inputComIcone}
           placeholder="Senha"
           placeholderTextColor="#aaa"
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.iconWrapper}
+        >
           <Ionicons
             name={showPassword ? "eye-off-outline" : "eye-outline"}
             size={24}
             color="#aaa"
           />
+        </TouchableOpacity>
+      </View>
+
+      
+      <View style={styles.esqueciSenha}>
+        <TouchableOpacity onPress={handleEsqueciSenha}>
+          <Text style={styles.esqueciSenha}>Esqueceu a senha?</Text>
         </TouchableOpacity>
       </View>
 
@@ -92,7 +122,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  passwordContainer: {
+  inputWrapper: {
+    width: "100%",
     backgroundColor: "#222",
     borderRadius: 8,
     flexDirection: "row",
@@ -101,10 +132,15 @@ const styles = StyleSheet.create({
     height: 48,
     marginBottom: 16,
   },
-  passwordInput: {
+  
+  inputComIcone: {
     flex: 1,
     color: "#fff",
   },
+  
+  iconWrapper: {
+    marginLeft: 8,
+  },  
   modalOverlay: {
     flex: 1,
     backgroundColor: "#000000aa",
@@ -139,7 +175,7 @@ const styles = StyleSheet.create({
   },
   botaoCancelar: {
     borderColor: "#333",
-  },
+  },  
   container: {
     flex: 1,
     backgroundColor: "#111",
@@ -187,4 +223,10 @@ const styles = StyleSheet.create({
     color: "#f90",
     marginTop: 16,
   },
+  esqueciSenha: {
+    color: "#f90",
+    marginTop: 0,
+    alignSelf: "flex-end",
+    margin: 4,
+  },  
 });

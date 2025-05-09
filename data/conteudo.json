@@ -1,0 +1,35 @@
+{
+    "categorias": [
+      { "nome": "Ação", "id": 28 },
+      { "nome": "Aventura", "id": 12 },
+      { "nome": "Animação", "id": 16 },
+      { "nome": "Comédia", "id": 35 },
+      { "nome": "Crime", "id": 80 },
+      { "nome": "Documentário", "id": 99 },
+      { "nome": "Drama", "id": 18 },
+      { "nome": "Família", "id": 10751 },
+      { "nome": "Fantasia", "id": 14 },
+      { "nome": "História", "id": 36 },
+      { "nome": "Terror", "id": 27 },
+      { "nome": "Musical", "id": 10402 },
+      { "nome": "Mistério", "id": 9648 },
+      { "nome": "Romance", "id": 10749 },
+      { "nome": "Ficção Científica", "id": 878 },
+      { "nome": "Cinema TV", "id": 10770 },
+      { "nome": "Thriller", "id": 53 },
+      { "nome": "Guerra", "id": 10752 },
+      { "nome": "Faroeste", "id": 37 }
+    ],
+    "streamings": [
+      { "nome": "Todos", "id": 0 },
+      { "nome": "Netflix", "id": 8 },
+      { "nome": "Prime Video", "id": 119 },
+      { "nome": "Disney+", "id": 337 },
+      { "nome": "Max", "id": 1899 },
+      { "nome": "Globoplay", "id": 307 },
+      { "nome": "Apple TV+", "id": 350 },
+      { "nome": "Paramount+", "id": 531 },
+      { "nome": "Crunchyroll", "id": 283 }
+    ]
+  }
+  

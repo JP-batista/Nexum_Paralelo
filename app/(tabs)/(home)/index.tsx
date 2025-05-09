@@ -18,40 +18,11 @@ import {
   searchSeries,
 } from "../../../services/tmdb";
 import Logo from "@/assets/images/Icon2.png";
+import conteudo from "@/data/conteudo.json";
+import SkeletonCard from "@/components/SkeletonCard";
 
-const CATEGORIAS = [
-  { nome: "Ação", id: 28 },
-  { nome: "Aventura", id: 12 },
-  { nome: "Animação", id: 16 },
-  { nome: "Comédia", id: 35 },
-  { nome: "Crime", id: 80 },
-  { nome: "Documentário", id: 99 },
-  { nome: "Drama", id: 18 },
-  { nome: "Família", id: 10751 },
-  { nome: "Fantasia", id: 14 },
-  { nome: "História", id: 36 },
-  { nome: "Terror", id: 27 },
-  { nome: "Musical", id: 10402 },
-  { nome: "Mistério", id: 9648 },
-  { nome: "Romance", id: 10749 },
-  { nome: "Ficção Científica", id: 878 },
-  { nome: "Cinema TV", id: 10770 },
-  { nome: "Thriller", id: 53 },
-  { nome: "Guerra", id: 10752 },
-  { nome: "Faroeste", id: 37 },
-];
-
-const STREAMINGS = [
-  { nome: "Todos", id: 0 },
-  { nome: "Netflix", id: 8 },
-  { nome: "Prime Video", id: 119 },
-  { nome: "Disney+", id: 337 },
-  { nome: "Max", id: 384 },
-  { nome: "Globoplay", id: 307 },
-  { nome: "Apple TV+", id: 350 },
-  { nome: "Paramount+", id: 531 },
-  { nome: "Crunchyroll", id: 283 },
-];
+const CATEGORIAS = conteudo.categorias;
+const STREAMINGS = conteudo.streamings;
 
 export default function HomeScreen() {
   const [conteudos, setConteudos] = useState<Record<string, any[]>>({});
@@ -233,8 +204,19 @@ export default function HomeScreen() {
 
       {/* Resultados da busca */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#f90" />
+        <View style={{ marginBottom: 20 }}>
+          <Text style={styles.sectionTitle}>Carregando</Text>
+            {[0, 1, 2].map((_, rowIndex) => (
+              <ScrollView
+                key={rowIndex}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {Array.from({ length: 6 }).map((_, cardIndex) => (
+                  <SkeletonCard key={cardIndex} />
+                ))}
+              </ScrollView>
+            ))}
         </View>
       ) : searchTerm.trim() !== "" ? (
         <>
@@ -312,6 +294,7 @@ export default function HomeScreen() {
           );
         })        
       )}
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
@@ -331,7 +314,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#1A1A1D",
+    backgroundColor: "#111111",
     alignItems: "center",
   },
   
@@ -350,7 +333,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#1A1A1D",
+    backgroundColor: "#111111",
     paddingHorizontal: 20,
     paddingTop: 40,
   },
